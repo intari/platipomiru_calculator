@@ -8,6 +8,17 @@
 
 ---
 
+## Репозитории и зеркалирование
+
+| Репозиторий | Роль | GitHub Pages |
+|---|---|---|
+| [intari/platipomiru_calculator](https://github.com/intari/platipomiru_calculator) | Оригинал, владелец данных | [intari.github.io](https://intari.github.io/platipomiru_calculator/) |
+| [taurired-ai/platipomiru_calculator](https://github.com/taurired-ai/platipomiru_calculator) | Mirror, разработчик | [taurired-ai.github.io](https://taurired-ai.github.io/platipomiru_calculator/) |
+
+**Принцип работы**: оба репозитория содержат идентичный код. Изменения пушатся сразу в оба. GitHub Actions в обоих репозиториях ежедневно обновляет `data/rates.json` независимо.
+
+---
+
 ## Что делает
 
 - Подгружает **актуальные курсы ЦБ РФ** (USD, EUR) автоматически через API
