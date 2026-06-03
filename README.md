@@ -2,7 +2,7 @@
 
 Интерактивный калькулятор эффективного курса **RUB → EUR / USD** через сервис [PlatiPoMiru](https://platipomiru.com/).
 
-**🔗 Живой пример**: [Откройте index.html в браузере](#как-запустить-локально) или [разверните на GitHub Pages](#развёртывание-на-github-pages).
+**🔗 Живой сайт**: https://intari.github.io/platipomiru_calculator/
 
 ---
 
@@ -35,7 +35,9 @@ platipomiru-calculator/
 │   └── workflows/
 │       └── update-rates.yml  # Авто-обновление курсов каждый день
 ├── README.md               # Этот файл
-└── csv-export/             # (опционально) CSV-шаблоны для Excel
+├── LICENSE                 # MIT License
+└── scripts/
+    └── update_rates.py     # Python-скрипт для ручного обновления курсов
 ```
 
 ---
@@ -43,101 +45,36 @@ platipomiru-calculator/
 ## Как запустить локально
 
 ```bash
-# Клонировать или скачать папку
 cd platipomiru-calculator
 
-# Вариант 1: просто открыть файл в браузере
+# Вариант 1: просто открыть в браузере
 # Двойной клик на index.html
 
-# Вариант 2: локальный сервер (для CORS и лучшего опыта)
+# Вариант 2: локальный сервер
 python3 -m http.server 8080
 # Открыть http://localhost:8080
-
-# Вариант 3: Node.js
-npx serve .
 ```
-
-> API курсов ЦБ (`cbr-xml-daily.ru`) работает через HTTPS и CORS, поэтому локальный сервер не обязателен — но рекомендуется для корректной работы Chart.js.
 
 ---
 
 ## Развёртывание на GitHub Pages
 
-### Шаг 1: Создай репозиторий на GitHub
-
-1. Зайди на [github.com](https://github.com) → **New repository**
-2. Назови: `platipomiru-calculator`
-3. Оставь **Public** (GitHub Pages бесплатен только для публичных репо)
-4. НЕ создавай README — загрузим файлы с компьютера
-
-### Шаг 2: Загрузи файлы
-
-**Вариант A — через Git CLI**:
-
-```bash
-# Перейди в папку проекта
-cd platipomiru-calculator
-
-# Инициализируй git
-git init
-git add .
-git commit -m "Initial: PlatiPoMiru calculator with live CBR rates"
-
-# Подключи удалённый репозиторий
-git remote add origin https://github.com/ТВОЙ_НИК/platipomiru-calculator.git
-
-# Отправь на GitHub
-git push -u origin main
-```
-
-**Вариант B — через веб-интерфейс**:
-
-1. Зайди в созданный репозиторий
-2. Нажми **"Add file" → "Upload files"**
-3. Перетащи ВСЕ файлы из папки `platipomiru-calculator/`
-4. Commit message: `Initial commit`
-
-### Шаг 3: Включи GitHub Pages
-
-1. В репозитории: **Settings** → **Pages** (в левом меню)
-2. **Source**: выбери `Deploy from a branch`
-3. **Branch**: выбери `main` → папка `/ (root)`
-4. Нажми **Save**
-5. Через 1–2 минуты сайт будет доступен по адресу:
-   ```
-   https://ТВОЙ_НИК.github.io/platipomiru-calculator/
-   ```
-
-### Шаг 4: Авто-обновление курсов (опционально)
-
-Файл `.github/workflows/update-rates.yml` уже включён. GitHub Actions будет:
-- Каждый день в 08:00 МСК запрашивать курсы ЦБ
-- Обновлять `data/rates.json`
-- Пушить изменения
-
-Чтобы включить:
-1. В репозитории: **Settings** → **Actions** → **General**
-2. **Workflow permissions**: выбери `Read and write permissions`
-3. Сохрани
+1. Создай публичный репозиторий `platipomiru-calculator`
+2. Загрузи все файлы
+3. **Settings** → **Pages** → Source: `Deploy from a branch`, Branch: `main` / `(root)`
+4. Через 1–2 минуты сайт доступен по адресу: `https://ТВОЙ_НИК.github.io/platipomiru-calculator/`
 
 ---
 
 ## Как пользоваться калькулятором
 
 1. **Параметры PPM** вверху — изменяй по факту своих пополнений:
-   - `PPM эф. RUB/EUR` — сколько ₽ вы заплатили за 1 € (посмотри в банковской выписке)
-   - `PPM внутр. EUR/USD` — обычно 0.87–0.89 (берётся из истории списаний)
+   - `PPM эф. RUB/EUR` — сколько ₽ вы заплатили за 1 €
+   - `PPM внутр. EUR/USD` — обычно 0.87–0.89
    - `Комиссия` — €0.25 по умолчанию
 
-2. **Табы**:
-   - **Пополнение EUR** — сколько ₽ нужно для N € на баланс
-   - **Оплата в EUR** — сколько ₽ уйдёт на подписку в €
-   - **Оплата в USD** — сколько ₽ уйдёт на подписку в $
-   - **EUR vs USD** — прямое сравнение, если сервис позволяет выбрать валюту
-   - **Стратегия** — моделирование крупного vs мелкого пополнения
-   - **График комиссии** — визуализация влияния €0.25
-
-3. **Своя сумма** — введи любое число под таблицей, результат пересчитается мгновенно.
+2. **Табы**: Пополнение EUR, Оплата в EUR/USD, EUR vs USD, Стратегия, График комиссии
+3. **Своя сумма** — введи любое число под таблицей, результат пересчитается мгновенно
 
 ---
 
@@ -146,25 +83,35 @@ git push -u origin main
 | Компонент | Обновляется |
 |---|---|
 | Курсы ЦБ РФ | Автоматически при загрузке страницы + ежедневно через Actions |
-| Параметры PPM | Вручную пользователем (зависят от фактических пополнений) |
-| Код | При обновлении репозитория |
+| Параметры PPM | Вручную пользователем |
 
 ---
 
-## Технологии
+## Используемые технологии
 
-- Vanilla JavaScript (ES2020+)
-- Chart.js 4.x для графиков
-- CSS Grid / Flexbox (dark theme)
-- GitHub Pages (бесплатный хостинг)
-- cbr-xml-daily.ru API (CORS-friendly зеркало курсов ЦБ)
+| Компонент | Назначение |
+|---|---|
+| **Vanilla JavaScript (ES2020+)** | Логика расчётов, табы, экспорт CSV |
+| **Chart.js 4.x** | Интерактивные графики (4 canvas-чарта) |
+| **CSS Grid / Flexbox** | Адаптивная вёрстка, тёмная тема |
+| **GitHub Pages** | Бесплатный хостинг статики |
+| **cbr-xml-daily.ru API** | Зеркало курсов ЦБ РФ с CORS |
+| **GitHub Actions** | Ежедневное авто-обновление `data/rates.json` |
+| **Python 3 + requests** | Скрипт `update_rates.py` для ручного обновления |
+
+---
+
+## Авторство
+
+| Роль | Кто |
+|---|---|
+| **Аналитика, разработка фронтенда, DevOps** | **Tauri Red** — [<taurired-ai@l.viorsan.com>](mailto:taurired-ai@l.viorsan.com) |
+| **Заказчик, владелец данных, репозитория** | **[intari](https://github.com/intari)** |
+
+> Проект выполнен по запросу [intari](https://github.com/intari). Все расчёты эффективных курсов, прогнозы и визуализации произведены Tauri Red.
 
 ---
 
 ## Лицензия
 
-MIT — используйте свободно.
-
----
-
-*Создано на основе анализа реальных транзакций через PlatiPoMiru (октябрь 2025 — май 2026).*
+[MIT License](LICENSE) © 2026 Tauri Red, intari
