@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlatiPoMiru Calculator — Эффективный курс</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PlatiPoMiru Calculator</h1>
+            <p>Калькулятор эффективного курса с авто-подгрузкой курсов ЦБ РФ</p>
+            <div id="rate-status" class="status-badge loading">Загрузка курсов ЦБ...</div>
+        </header>
+
+        <section class="rates-panel">
+            <h2>Текущие курсы</h2>
+            <div class="rates-grid">
+                <div class="rate-card cbr">
+                    <div class="rate-label">ЦБ РФ USD</div>
+                    <div class="rate-value" id="cbr-usd">—</div>
+                    <div class="rate-date" id="cbr-date">—</div>
+                </div>
+                <div class="rate-card cbr">
+                    <div class="rate-label">ЦБ РФ EUR</div>
+                    <div class="rate-value" id="cbr-eur">—</div>
+                </div>
+                <div class="rate-card cbr">
+                    <div class="rate-label">ЦБ EUR/USD</div>
+                    <div class="rate-value" id="cbr-eurusd">—</div>
+                </div>
+                <div class="rate-card ppm editable">
+                    <div class="rate-label">PPM эф. RUB/EUR</div>
+                    <input type="number" step="0.01" id="ppm-rub-eur" value="97.89">
+                    <div class="hint">Измените по факту пополнений</div>
+                </div>
+                <div class="rate-card ppm editable">
+                    <div class="rate-label">PPM внутр. EUR/USD</div>
+                    <input type="number" step="0.001" id="ppm-eur-usd" value="0.880">
+                    <div class="hint">Обычно 0.87–0.89</div>
+                </div>
+                <div class="rate-card ppm editable">
+                    <div class="rate-label">Комиссия списания</div>
+                    <input type="number" step="0.01" id="ppm-commission" value="0.25">
+                    <div class="hint">EUR за операцию</div>
+                </div>
+            </div>
+            <button id="recalc-btn" class="btn-primary">Пересчитать всё</button>
+        </section>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="eur-topup">Пополнение EUR</button>
+            <button class="tab-btn" data-tab="eur-pay">Оплата в EUR</button>
+            <button class="tab-btn" data-tab="usd-pay">Оплата в USD</button>
+            <button class="tab-btn" data-tab="compare">EUR vs USD</button>
+            <button class="tab-btn" data-tab="strategy">Стратегия</button>
+            <button class="tab-btn" data-tab="comm-chart">График комиссии</button>
+        </div>
+
+        <section id="tab-eur-topup" class="tab-content active">
+            <h2>Пополнение баланса EUR</h2>
+            <p class="desc">Сколько рублей нужно заплатить, чтобы получить N евро на баланс PPM.</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Сумма EUR</th>
+                            <th>Рубли к оплате</th>
+                            <th>Эф. курс</th>
+                            <th>Курс ЦБ</th>
+                            <th>Разница</th>
+                            <th>Превышение</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-eur-topup"></tbody>
+                </table>
+            </div>
+            <div class="custom-calc">
+                <label>Своя сумма EUR: <input type="number" id="custom-eur-topup" value="35" min="1"></label>
+                <span id="custom-eur-topup-result" class="result">→ 3426.15 ₽</span>
+            </div>
+        </section>
+
+        <section id="tab-eur-pay" class="tab-content">
+            <h2>Оплата подписки в EUR</h2>
+            <p class="desc">Сколько рублей уйдёт, если сервис выставил счёт в евро (с комиссией €0.25).</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Сумма на сервисе, €</th>
+                            <th>EUR списано (с комисс.)</th>
+                            <th>Рубли</th>
+                            <th>Эф. курс</th>
+                            <th>Переплата к ЦБ EUR</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-eur-pay"></tbody>
+                </table>
+            </div>
+            <div class="custom-calc">
+                <label>Своя сумма EUR: <input type="number" id="custom-eur-pay" value="20" min="1"></label>
+                <span id="custom-eur-pay-result" class="result">→ 1982.27 ₽</span>
+            </div>
+        </section>
+
+        <section id="tab-usd-pay" class="tab-content">
+            <h2>Оплата подписки в USD</h2>
+            <p class="desc">Сколько рублей уйдёт, если сервис выставил счёт в долларах (двойная конвертация + комиссия).</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Сумма на сервисе, $</th>
+                            <th>EUR списано</th>
+                            <th>Рубли</th>
+                            <th>Эф. курс RUB/USD</th>
+                            <th>Переплата к ЦБ USD</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-usd-pay"></tbody>
+                </table>
+            </div>
+            <div class="custom-calc">
+                <label>Своя сумма USD: <input type="number" id="custom-usd-pay" value="20" min="1"></label>
+                <span id="custom-usd-pay-result" class="result">→ 1747.34 ₽</span>
+            </div>
+        </section>
+
+        <section id="tab-compare" class="tab-content">
+            <h2>Сравнение: оплата в EUR vs USD</h2>
+            <p class="desc">Если сервис позволяет выбрать валюту — сколько сэкономишь?</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Сумма на сервисе</th>
+                            <th>В EUR, ₽</th>
+                            <th>В USD, ₽</th>
+                            <th>Разница</th>
+                            <th>USD дороже на</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-compare"></tbody>
+                </table>
+            </div>
+            <div class="highlight-box">
+                <strong>Вывод:</strong> при оплате в USD через PlatiPoMiru вы переплачиваете дополнительно <span id="usd-penalty-avg">~5–8%</span> из-за внутреннего кросс-курса PPM (0.88 EUR/USD вместо рыночного ~0.83). Если сервис позволяет выбрать валюту — всегда выбирайте EUR.
+            </div>
+        </section>
+
+        <section id="tab-strategy" class="tab-content">
+            <h2>Стратегия пополнения: крупно vs мелко</h2>
+            <p class="desc">Моделирование: годовой бюджет 1000 EUR, 12 подписок по ~83 EUR/мес.</p>
+            <div class="strategy-grid">
+                <div class="strategy-card">
+                    <h3>Крупное пополнение</h3>
+                    <p>1000 EUR сразу по текущему курсу, 12 списаний с комиссией.</p>
+                    <div class="big-number" id="strat-large">—</div>
+                    <div class="sub">рублей суммарно</div>
+                </div>
+                <div class="strategy-card">
+                    <h3>Мелкие пополнения</h3>
+                    <p>12 пополнений по 83 EUR + 12 комиссий на списание.</p>
+                    <div class="big-number" id="strat-small">—</div>
+                    <div class="sub">рублей суммарно (при стабильном курсе)</div>
+                </div>
+                <div class="strategy-card accent">
+                    <h3>Разница</h3>
+                    <div class="big-number" id="strat-diff">—</div>
+                    <div class="sub">рублей</div>
+                </div>
+            </div>
+            <div class="hint-box">
+                Если курс PPM растёт (рубль падает) — крупное пополнение выигрывает, потому что вы фиксируете курс сейчас. Если курс падает — мелкие пополнения выгоднее. При стабильном курсе разница только в комиссиях на пополнение (если они есть).
+            </div>
+        </section>
+
+        <section id="tab-comm-chart" class="tab-content">
+            <h2>График: влияние фиксированной комиссии €0.25</h2>
+            <div class="chart-row">
+                <div class="chart-box">
+                    <canvas id="chart-comm-eur"></canvas>
+                </div>
+                <div class="chart-box">
+                    <canvas id="chart-comm-usd"></canvas>
+                </div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-box wide">
+                    <canvas id="chart-eur-vs-usd"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>Данные ЦБ РФ подгружаются через <a href="https://www.cbr-xml-daily.ru/" target="_blank">cbr-xml-daily.ru</a> (неофициальное зеркало).</p>
+            <p>Калькулятор работает полностью в браузере. Никакие данные не отправляются на сервер.</p>
+        </footer>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
