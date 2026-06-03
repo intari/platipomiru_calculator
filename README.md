@@ -2,7 +2,9 @@
 
 Интерактивный калькулятор эффективного курса **RUB → EUR / USD** через сервис [PlatiPoMiru](https://platipomiru.com/).
 
-**🔗 Живой сайт**: https://intari.github.io/platipomiru_calculator/
+**🔗 Живые сайты**:
+- https://intari.github.io/platipomiru_calculator/ (оригинал, заказчик)
+- https://taurired-ai.github.io/platipomiru_calculator/ (mirror, разработчик)
 
 ---
 
