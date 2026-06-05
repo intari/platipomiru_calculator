@@ -3,7 +3,7 @@ name: Update CBR Rates Daily
 on:
   schedule:
     - cron: '0 5 * * *'  # 08:00 MSK (UTC+3)
-  workflow_dispatch:      # Ручной запуск тоже доступен
+  workflow_dispatch:
 
 jobs:
   update:
@@ -13,14 +13,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch CBR rates
+      - name: Fetch and extract CBR rates
         run: |
-          curl -s "https://www.cbr-xml-daily.ru/daily_json.js" > data/rates.json
+          curl -s "https://www.cbr-xml-daily.ru/daily_json.js" | \
+            jq -r '{date: .Date[:10], usd: .Valute.USD.Value, eur: .Valute.EUR.Value, source: "cbr.ru"}' \
+            > data/rates.json
 
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/rates.json
+          git add data/rates.json .github/workflows/update-rates.yml
           git diff --cached --quiet || git commit -m "Update CBR rates: $(date -u +%Y-%m-%d)"
           git push
